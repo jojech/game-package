@@ -1,6 +1,6 @@
 {
   "name": "@jojech/game-core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Package containing core game assets like decks and dice.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
