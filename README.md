@@ -1,9 +1,20 @@
 # @jojech/game-core
 
-Package containing core game assets like decks and dice.
+A TypeScript library providing core game components including cards, decks, and dice for tabletop and digital games.
 
+[![npm version](https://badge.fury.io/js/@jojech%2Fgame-core.svg)](https://badge.fury.io/js/@jojech%2Fgame-core)
 [![CI](https://github.com/jojech/game-package/actions/workflows/ci.yml/badge.svg)](https://github.com/jojech/game-package/actions/workflows/ci.yml)
-[![npm version](https://badge.fury.io/js/%40jojech%2Fgame-core.svg)](https://badge.fury.io/js/%40jojech%2Fgame-core)
+[![Coverage Status](https://img.shields.io/badge/coverage-check_actions-brightgreen)](https://github.com/jojech/game-package/actions)
+
+## Features
+
+- 🎲 **Dice System** - Customizable dice with faces, values, and symbols
+- 🃏 **Card Management** - Flexible card system with stats, costs, and traits
+- 🎯 **Deck Operations** - Complete deck management with shuffle, draw, and discard
+- 📦 **TypeScript First** - Full type safety and IntelliSense support
+- 🔄 **Modern ESM/CJS** - Dual package exports for maximum compatibility
+- ✅ **Well Tested** - Comprehensive unit test coverage
+- 📖 **Fully Documented** - Complete API documentation
 
 ## Installation
 
@@ -11,93 +22,271 @@ Package containing core game assets like decks and dice.
 npm install @jojech/game-core
 ```
 
-## Usage
-
-```typescript
-import { createGame, GameCore, type GameConfig } from '@jojech/game-core'
-
-// Create a game configuration
-const config: GameConfig = {
-  name: 'My Awesome Game',
-  players: 4,
-  duration: 60 // optional
-}
-
-// Create a game instance
-const game = createGame(config)
-// or
-const game = new GameCore(config)
-
-// Use the game
-console.log(game.getName()) // 'My Awesome Game'
-console.log(game.getPlayers()) // 4
-console.log(game.getDuration()) // 60
+```bash
+yarn add @jojech/game-core
 ```
 
-## API
+```bash
+pnpm add @jojech/game-core
+```
 
-### `GameConfig`
+## Quick Start
+
+### Using Dice
 
 ```typescript
-interface GameConfig {
-  name: string
-  players: number
-  duration?: number
+import { Die, DicePool } from '@jojech/game-core';
+
+// Create a standard 6-sided die
+const d6 = new Die({ sides: 6 });
+const result = d6.roll();
+console.log(result); // { value: 4 }
+
+// Create a custom die with symbols
+const customDie = new Die({
+  sides: 4,
+  faces: [
+    { symbols: ['⚔️'], value: 1 },
+    { symbols: ['🛡️'], value: 1 },
+    { symbols: ['⚔️', '⚔️'], value: 2 },
+    { symbols: ['💥'], value: 3 }
+  ]
+});
+
+// Use multiple dice
+const pool = new DicePool([d6, customDie]);
+const poolResult = pool.rollAll();
+console.log(poolResult); // Combined results from both dice
+```
+
+### Working with Cards
+
+```typescript
+import { Card } from '@jojech/game-core';
+
+const fireballCard = new Card({
+  title: 'Fireball',
+  subtitle: 'Spell',
+  cost: [{ resource: 'mana', amount: 3 }],
+  primary: [
+    { label: 'Damage', value: 6 }
+  ],
+  flavorText: 'A burst of flame erupts from your fingertips.',
+  tags: ['spell', 'fire', 'damage'],
+  traits: ['instant']
+});
+
+console.log(fireballCard.title); // 'Fireball'
+console.log(fireballCard.getCost()); // [{ resource: 'mana', amount: 3 }]
+```
+
+### Managing Decks
+
+```typescript
+import { Deck, Card } from '@jojech/game-core';
+
+// Create some cards
+const cards = [
+  new Card({ title: 'Lightning Bolt' }),
+  new Card({ title: 'Heal' }),
+  new Card({ title: 'Shield' })
+];
+
+// Create a deck
+const deck = new Deck('My Spell Deck', cards, {
+  shuffle: true,
+  minSize: 1,
+  maxSize: 60
+});
+
+// Draw cards
+const hand = deck.drawCards(5);
+console.log(hand.length); // 3 (all available cards)
+
+// Play a card
+if (hand.length > 0) {
+  deck.playCard(hand[0].stateId);
+}
+
+// Check deck state
+console.log(deck.getActiveDeckSize()); // 0
+console.log(deck.getInPlaySize()); // 1
+```
+
+## API Reference
+
+### Die Class
+
+Create and roll dice with customizable faces and values.
+
+```typescript
+interface DieOptions {
+  sides: number;
+  faces?: DieFace[];
+  defaultColor?: string;
+  label?: string;
+}
+
+interface DieFace {
+  descriptor?: string;
+  symbols?: string[];
+  value?: number;
+  color?: string;
 }
 ```
 
-### `GameCore`
+**Methods:**
+- `roll(): DieResult` - Roll the die and return the result
+- `getFaces(): DieFace[]` - Get all faces of the die
+- `getSides(): number` - Get the number of sides
 
-The main game class that holds configuration and provides game methods.
+### Card Class
 
-#### Constructor
+Flexible card system supporting various game mechanics.
 
-- `new GameCore(config: GameConfig)` - Create a new game instance
+```typescript
+interface CardOptions {
+  title: string;
+  subtitle?: string;
+  primary?: CardStatOptions[];
+  secondary?: CardStatOptions[];
+  flavorText?: string;
+  imageUrl?: string;
+  suits?: string[];
+  cost?: CardCost[];
+  tags?: string[];
+  setIdentifier?: string;
+  traits?: string[];
+  onReveal?: string;
+  onPlay?: string;
+  onDiscard?: string;
+  onExhaust?: string;
+}
+```
 
-#### Methods
+**Methods:**
+- `getCost(): CardCost[]` - Get the card's resource cost
+- `getTags(): string[]` - Get the card's tags
+- `getTraits(): string[]` - Get the card's traits
 
-- `getName(): string` - Get the game name
-- `getPlayers(): number` - Get the number of players
-- `getDuration(): number | undefined` - Get the game duration (if set)
-- `getConfig(): GameConfig` - Get a copy of the game configuration
+### Deck Class
 
-### `createGame(config: GameConfig): GameCore`
+Complete deck management with state tracking.
 
-Factory function to create a new game instance.
+```typescript
+interface DeckOptions {
+  shuffle?: boolean;
+  minSize?: number;
+  maxSize?: number;
+}
+```
+
+**Methods:**
+- `drawCards(count: number): CardState[]` - Draw cards from the deck
+- `playCard(stateId: string): CardState | null` - Move a card to play
+- `discardCard(stateId: string): CardState | null` - Discard a card
+- `shuffleDeck(): void` - Shuffle the active deck
+- `getActiveDeckSize(): number` - Get active deck size
+- `getDiscardPileSize(): number` - Get discard pile size
+- `getInPlaySize(): number` - Get in-play cards count
+
+### DicePool Class
+
+Manage and roll multiple dice together.
+
+**Methods:**
+- `rollAll(): DieResult` - Roll all dice in the pool
+- `addDie(die: Die): void` - Add a die to the pool
+- `removeDie(index: number): Die | null` - Remove a die from the pool
+- `getDiceCount(): number` - Get the number of dice in the pool
 
 ## Development
 
+### Prerequisites
+
+- Node.js 18 or higher
+- npm, yarn, or pnpm
+
 ### Setup
 
+1. Clone the repository:
+```bash
+git clone https://github.com/jojech/game-package.git
+cd game-package
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
+3. Build the project:
+```bash
+npm run build
+```
+
+4. Run tests:
+```bash
+npm test
+```
+
 ### Available Scripts
 
-- `npm run build` - Build the package
-- `npm run build:watch` - Build in watch mode
+- `npm run build` - Build the library for production
+- `npm run build:watch` - Build in watch mode for development
 - `npm test` - Run tests in watch mode
-- `npm run test:ci` - Run tests once
-- `npm run test:coverage` - Run tests with coverage
-- `npm run typecheck` - Run TypeScript type checking
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Run ESLint with auto-fix
+- `npm run test:ci` - Run tests once (for CI)
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run typecheck` - Type check without emitting files
+- `npm run lint` - Lint the source code
+- `npm run lint:fix` - Lint and fix issues automatically
 - `npm run format` - Format code with Prettier
 - `npm run format:check` - Check code formatting
-- `npm run clean` - Clean build artifacts
+- `npm run changeset` - Create a new changeset for release
+- `npm run version` - Update version using changesets
+- `npm run release` - Build and publish to npm
 
-### Release Process
+### Testing
 
-This package uses [Changesets](https://github.com/changesets/changesets) for version management and automated releases.
+The project uses [Vitest](https://vitest.dev/) for unit testing. Tests are located alongside source files with the `.test.ts` extension.
 
-1. Make your changes
-2. Run `npm run changeset` to create a changeset
-3. Commit your changes and the changeset
-4. Push to main branch
-5. A release PR will be automatically created
-6. Merge the release PR to publish to npm
+```bash
+# Run tests in watch mode
+npm test
+
+# Run tests once
+npm run test:ci
+
+# Run with coverage
+npm run test:coverage
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass (`npm test`)
+6. Run linting (`npm run lint:fix`)
+7. Create a changeset (`npm run changeset`)
+8. Commit your changes (`git commit -m 'Add some amazing feature'`)
+9. Push to the branch (`git push origin feature/amazing-feature`)
+10. Open a Pull Request
+
+### Versioning
+
+This project uses [Changesets](https://github.com/changesets/changesets) for version management. To release a new version:
+
+1. Create a changeset: `npm run changeset`
+2. Commit the changeset file
+3. The release workflow will automatically create a PR with version updates
+4. Merge the PR to publish to npm
 
 ## License
 
-ISC
+ISC © Jeremy Johnson
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a detailed history of changes.
